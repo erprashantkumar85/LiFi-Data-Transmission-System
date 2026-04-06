@@ -19,13 +19,17 @@ from setuptools import setup, Extension
 from Cython.Build import cythonize
 import numpy as np
 import sys
+import os
+
+# Disable parallel compilation to avoid process pool crashes on Windows
+os.environ['CYTHON_TRACE'] = '0'
 
 # Compiler flags for optimisation and symbol stripping
 extra_compile_args = []
 extra_link_args    = []
 
 if sys.platform == "win32":
-    extra_compile_args = ["/O2"]          # MSVC optimise
+    extra_compile_args = ["/O2", "/DNDEBUG"]  # MSVC optimise
 elif sys.platform == "darwin":
     extra_compile_args = ["-O2", "-w"]
     extra_link_args    = ["-Wl,-strip-all"]
@@ -63,7 +67,8 @@ setup(
             "wraparound"    : False,
             "cdivision"     : True,
         },
-        nthreads = 1, # Force single-threaded compilation
+        nthreads = 1,  # Force single-threaded compilation (critical for Windows)
         language_level="3",
+        force = True,  # Force recompilation
     ),
 )
