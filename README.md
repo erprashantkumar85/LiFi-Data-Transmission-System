@@ -124,24 +124,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-## 🖼️ How to add Images to README
-
-To add your own screenshots to this README:
-
-1.  **Place your image** in the `assets/` folder (e.g., `my_screenshot.png`).
-2.  **Use Markdown syntax**:
-    ```markdown
-    ![Description of image](assets/my_screenshot.png)
-    ```
-3.  **For centering or resizing**, you can use HTML:
-    ```html
-    <p align="center">
-      <img src="assets/my_screenshot.png" alt="App Screenshot" width="600" />
-    </p>
-    ```
-
----
-
 ## 🤝 Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
