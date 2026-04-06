@@ -51,10 +51,21 @@ jobs:
               exit 1
             }
           }
+      # ── 4.5. Verify setup.py exists ───────────────────────────────
+      - name: Verify setup.py exists
+        shell: pwsh
+        run: |
+          if (Test-Path "setup.py") {
+            Write-Host "setup.py found"
+            Get-Content setup.py | Select-Object -First 20
+          } else {
+            Write-Error "setup.py not found!"
+            exit 1
+          }
 
       # ── 5. Compile .pyx → .pyd with Cython ───────────────────────────
       - name: Compile Cython extensions
-        run: python setup.py build_ext --inplace
+        run: python setup.py build_ext --inplace -v
 
       # ── 6. Verify .pyd files were built ──────────────────────────────
       - name: Verify compiled extensions

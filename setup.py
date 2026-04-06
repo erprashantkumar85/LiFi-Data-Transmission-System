@@ -63,6 +63,6 @@ setup(
             "wraparound"    : False,
             "cdivision"     : True,
         },
-        nthreads = 4,
+        nthreads = 1,
     ),
 )
