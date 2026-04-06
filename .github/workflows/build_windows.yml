@@ -3,121 +3,121 @@ name: Build Windows Release
 # Triggers: every push, or manually from the Actions tab
 on:
   push:
-    branches: [ main, master ]
-  workflow_dispatch:           # allows manual "Run workflow" button
+    branches: [main, master]
+  workflow_dispatch: # allows manual "Run workflow" button
 
 jobs:
   build-windows:
-    runs-on: windows-latest    # real Windows Server 2022 runner (free)
+    runs-on: windows-latest # real Windows Server 2022 runner (free)
 
     steps:
-    # ── 1. Checkout your repository ──────────────────────────────────
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      # ── 1. Checkout your repository ──────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    # ── 2. Set up Python 3.12 ────────────────────────────────────────
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-        cache: 'pip'
+      # ── 2. Set up Python 3.12 ────────────────────────────────────────
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          # cache: 'pip'
 
-    # ── 3. Install all dependencies ──────────────────────────────────
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install cython setuptools wheel
-        pip install PyQt5 pyqtgraph
-        pip install numpy pillow scipy
-        pip install pyserial
-        pip install pyinstaller
+      # ── 3. Install all dependencies ──────────────────────────────────
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install cython setuptools wheel
+          pip install PyQt5 pyqtgraph
+          pip install numpy pillow scipy
+          pip install pyserial
+          pip install pyinstaller
 
-    # ── 4. Rename .py → .pyx for the protected modules ───────────────
-    - name: Prepare .pyx source files
-      shell: pwsh
-      run: |
-        $modules = @(
-          "lifi_analyser",
-          "lifi_transmitter",
-          "lifi_receiver",
-          "lifi_hardware_protocol"
-        )
-        foreach ($m in $modules) {
-          if (Test-Path "$m.py") {
-            Copy-Item "$m.py" "$m.pyx"
-            Write-Host "Copied $m.py -> $m.pyx"
+      # ── 4. Rename .py → .pyx for the protected modules ───────────────
+      - name: Prepare .pyx source files
+        shell: pwsh
+        run: |
+          $modules = @(
+            "lifi_analyser",
+            "lifi_transmitter",
+            "lifi_receiver",
+            "lifi_hardware_protocol"
+          )
+          foreach ($m in $modules) {
+            if (Test-Path "$m.py") {
+              Copy-Item "$m.py" "$m.pyx"
+              Write-Host "Copied $m.py -> $m.pyx"
+            } else {
+              Write-Error "Source file $m.py not found!"
+              exit 1
+            }
+          }
+
+      # ── 5. Compile .pyx → .pyd with Cython ───────────────────────────
+      - name: Compile Cython extensions
+        run: python setup.py build_ext --inplace
+
+      # ── 6. Verify .pyd files were built ──────────────────────────────
+      - name: Verify compiled extensions
+        shell: pwsh
+        run: |
+          $modules = @(
+            "lifi_analyser",
+            "lifi_transmitter",
+            "lifi_receiver",
+            "lifi_hardware_protocol"
+          )
+          foreach ($m in $modules) {
+            $pyd = Get-ChildItem -Filter "${m}*.pyd" | Select-Object -First 1
+            if ($pyd) {
+              Write-Host "OK: $($pyd.Name)"
+            } else {
+              Write-Error "MISSING: ${m}.pyd -- Cython build failed"
+              exit 1
+            }
+          }
+
+      # ── 7. Remove original .py source files before bundling ──────────
+      #       The .pyd binaries are imported by the same module names.
+      #       lifi_gui.py is kept — it is the entry point, not protected.
+      - name: Remove protected .py source files
+        shell: pwsh
+        run: |
+          $modules = @(
+            "lifi_analyser",
+            "lifi_transmitter",
+            "lifi_receiver",
+            "lifi_hardware_protocol"
+          )
+          foreach ($m in $modules) {
+            Remove-Item -Force -ErrorAction SilentlyContinue "$m.py"
+            Remove-Item -Force -ErrorAction SilentlyContinue "$m.pyx"
+            Write-Host "Removed $m.py / $m.pyx"
+          }
+          Get-ChildItem -Filter "*.c" | Remove-Item -Force
+          Write-Host "Removed .c intermediates"
+
+      # ── 8. Bundle with PyInstaller ────────────────────────────────────
+      - name: Bundle with PyInstaller
+        run: pyinstaller lifi_gui.spec
+
+      # ── 9. Verify the exe was produced ───────────────────────────────
+      - name: Verify build output
+        shell: pwsh
+        run: |
+          $exe = "dist\LiFi_BM-ES\LiFi_BM-ES.exe"
+          if (Test-Path $exe) {
+            $size = (Get-Item $exe).Length / 1MB
+            Write-Host "Build succeeded: $exe  ($([math]::Round($size,1)) MB)"
           } else {
-            Write-Error "Source file $m.py not found!"
+            Write-Error "EXE not found -- PyInstaller failed"
             exit 1
           }
-        }
 
-    # ── 5. Compile .pyx → .pyd with Cython ───────────────────────────
-    - name: Compile Cython extensions
-      run: python setup.py build_ext --inplace
-
-    # ── 6. Verify .pyd files were built ──────────────────────────────
-    - name: Verify compiled extensions
-      shell: pwsh
-      run: |
-        $modules = @(
-          "lifi_analyser",
-          "lifi_transmitter",
-          "lifi_receiver",
-          "lifi_hardware_protocol"
-        )
-        foreach ($m in $modules) {
-          $pyd = Get-ChildItem -Filter "${m}*.pyd" | Select-Object -First 1
-          if ($pyd) {
-            Write-Host "OK: $($pyd.Name)"
-          } else {
-            Write-Error "MISSING: ${m}.pyd -- Cython build failed"
-            exit 1
-          }
-        }
-
-    # ── 7. Remove original .py source files before bundling ──────────
-    #       The .pyd binaries are imported by the same module names.
-    #       lifi_gui.py is kept — it is the entry point, not protected.
-    - name: Remove protected .py source files
-      shell: pwsh
-      run: |
-        $modules = @(
-          "lifi_analyser",
-          "lifi_transmitter",
-          "lifi_receiver",
-          "lifi_hardware_protocol"
-        )
-        foreach ($m in $modules) {
-          Remove-Item -Force -ErrorAction SilentlyContinue "$m.py"
-          Remove-Item -Force -ErrorAction SilentlyContinue "$m.pyx"
-          Write-Host "Removed $m.py / $m.pyx"
-        }
-        Get-ChildItem -Filter "*.c" | Remove-Item -Force
-        Write-Host "Removed .c intermediates"
-
-    # ── 8. Bundle with PyInstaller ────────────────────────────────────
-    - name: Bundle with PyInstaller
-      run: pyinstaller lifi_gui.spec
-
-    # ── 9. Verify the exe was produced ───────────────────────────────
-    - name: Verify build output
-      shell: pwsh
-      run: |
-        $exe = "dist\LiFi_BM-ES\LiFi_BM-ES.exe"
-        if (Test-Path $exe) {
-          $size = (Get-Item $exe).Length / 1MB
-          Write-Host "Build succeeded: $exe  ($([math]::Round($size,1)) MB)"
-        } else {
-          Write-Error "EXE not found -- PyInstaller failed"
-          exit 1
-        }
-
-    # ── 10. Upload the dist folder as a downloadable artifact ─────────
-    - name: Upload Windows build artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: LiFi-BM-ES-Windows
-        path: dist\LiFi_BM-ES\
-        retention-days: 30
-        if-no-files-found: error
+      # ── 10. Upload the dist folder as a downloadable artifact ─────────
+      - name: Upload Windows build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LiFi-BM-ES-Windows
+          path: dist\LiFi_BM-ES\
+          retention-days: 30
+          if-no-files-found: error
