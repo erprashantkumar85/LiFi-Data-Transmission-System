@@ -1,5 +1,11 @@
 # Li-Fi Data Transmission System (BM-ES)
 
+![App Screenshot](assets/app_screenshot.png)
+
+## 🎥 Video Demo
+
+[![Li-Fi Demo Video](https://img.youtube.com/vi/woGBjcbJLf0/0.jpg)](https://www.youtube.com/watch?v=woGBjcbJLf0)
+
 ![Li-Fi Header](https://img.shields.io/badge/Technology-Li--Fi-brightgreen)
 ![Python Version](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
@@ -115,6 +121,24 @@ The system provides deep insights into the transmission quality:
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+## 🖼️ How to add Images to README
+
+To add your own screenshots to this README:
+
+1.  **Place your image** in the `assets/` folder (e.g., `my_screenshot.png`).
+2.  **Use Markdown syntax**:
+    ```markdown
+    ![Description of image](assets/my_screenshot.png)
+    ```
+3.  **For centering or resizing**, you can use HTML:
+    ```html
+    <p align="center">
+      <img src="assets/my_screenshot.png" alt="App Screenshot" width="600" />
+    </p>
+    ```
 
 ---
 
