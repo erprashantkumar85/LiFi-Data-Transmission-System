@@ -23,6 +23,7 @@ import os
 
 # Disable parallel compilation to avoid process pool crashes on Windows
 os.environ['CYTHON_TRACE'] = '0'
+os.environ['CYTHON_PARALLEL'] = '0'  # ADD THIS LINE
 
 # Compiler flags for optimisation and symbol stripping
 extra_compile_args = []
@@ -70,5 +71,6 @@ setup(
         nthreads = 1,  # Force single-threaded compilation (critical for Windows)
         language_level="3",
         force = True,  # Force recompilation
+        parallel = False,  # ADD THIS LINE - explicitly disable parallel compilation
     ),
 )
