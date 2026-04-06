@@ -63,6 +63,7 @@ setup(
             "wraparound"    : False,
             "cdivision"     : True,
         },
-        nthreads = 1,
+        nthreads = 1, # Force single-threaded compilation
+        language_level="3",
     ),
 )

@@ -65,7 +65,9 @@ jobs:
 
       # ── 5. Compile .pyx → .pyd with Cython ───────────────────────────
       - name: Compile Cython extensions
-        run: python setup.py build_ext --inplace -v
+        run: python setup.py build_ext --inplace -v --force
+        env:
+          CYTHON_TRACE: 0
 
       # ── 6. Verify .pyd files were built ──────────────────────────────
       - name: Verify compiled extensions
