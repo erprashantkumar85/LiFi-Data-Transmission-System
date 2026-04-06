@@ -71,6 +71,6 @@ setup(
         nthreads = 1,  # Force single-threaded compilation (critical for Windows)
         language_level="3",
         force = True,  # Force recompilation
-        parallel = False,  # ADD THIS LINE - explicitly disable parallel compilation
+        
     ),
 )
